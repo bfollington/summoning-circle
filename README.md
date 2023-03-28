@@ -7,4 +7,6 @@ This is a little hacking project to design prompts to draw our certain modes fro
 
 You'll need a `.env` file with `API_PATH` (typically set to `https://api.openai.com/v1`) and `API_KEY` set to your OpenAI key.
 
+Some commands expect a local `./notes` folder full of `.subtext` files (see [subtext](https://github.com/subconsciousnetwork/subtext/tree/main)).
+
 Then `cargo run` will present you with a REPL where you can send text and receive responses.
