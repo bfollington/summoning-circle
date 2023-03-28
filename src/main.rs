@@ -3,7 +3,7 @@ use serde_json::json;
 use std::env::{self, VarError};
 use reqwest::blocking::Client;
 use std::io::{self, Write};
-use notes::{load_note, list_notes, load_random_note};
+use notes::{load_note, list_notes, load_random_note, NoteError};
 
 mod notes;
 mod subtext;
@@ -15,26 +15,40 @@ struct Environment {
 
 #[derive(Debug)]
 enum AppError {
+    DotEnvError(dotenv::Error),
     EnvironmentError(VarError),
     NoteError(notes::NoteError)
 }
 
-fn main() -> Result<(), AppError> {
-    dotenv().ok();
+impl From<dotenv::Error> for AppError {
+    fn from(dotenv_error: dotenv::Error) -> Self {
+        AppError::DotEnvError(dotenv_error)
+    }
+}
 
-    // TODO: implement From to avoid
-    let api_path = 
-        env::var("API_PATH")
-        .map_err(|e| AppError::EnvironmentError(e))?;
-    let api_key = env::var("API_KEY")
-        .map_err(|e| AppError::EnvironmentError(e))?;
+impl From<VarError> for AppError {
+    fn from(var_error: VarError) -> Self {
+        AppError::EnvironmentError(var_error)
+    }
+}
+
+impl From<notes::NoteError> for AppError {
+    fn from(note_error: NoteError) -> Self {
+        AppError::NoteError(note_error)
+    }
+}
+
+fn main() -> Result<(), AppError> {
+    dotenv()?;
+
+    let api_path = env::var("API_PATH")?;
+    let api_key = env::var("API_KEY")?;
     let env = Environment { api_path, api_key };
 
     let client = Client::new();
 
     // Test loading notes from disk
-    let note = load_random_note()
-        .map_err(|e| AppError::NoteError(e))?;
+    let note = load_random_note()?;
 
     let prompt = critic(&note.content, &client, &env);
     println!("@@@\n{}\n\n", note.content);
