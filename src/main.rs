@@ -1,5 +1,5 @@
 use dotenv::dotenv;
-use notes::{list_notes, load_note, load_random_note, NoteError};
+use notes::{load_random_note, NoteError};
 use reqwest::blocking::Client;
 use serde_json::json;
 use std::env::{self, VarError};
