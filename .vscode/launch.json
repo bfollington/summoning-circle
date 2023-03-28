@@ -7,15 +7,15 @@
     {
       "type": "lldb",
       "request": "launch",
-      "name": "Debug executable 'prompt-manager-rs'",
+      "name": "Debug executable 'summoning-circle'",
       "cargo": {
         "args": [
           "build",
-          "--bin=prompt-manager-rs",
-          "--package=prompt-manager-rs"
+          "--bin=summoning-circle",
+          "--package=summoning-circle"
         ],
         "filter": {
-          "name": "prompt-manager-rs",
+          "name": "summoning-circle",
           "kind": "bin"
         }
       },
@@ -25,16 +25,16 @@
     {
       "type": "lldb",
       "request": "launch",
-      "name": "Debug unit tests in executable 'prompt-manager-rs'",
+      "name": "Debug unit tests in executable 'summoning-circle'",
       "cargo": {
         "args": [
           "test",
           "--no-run",
-          "--bin=prompt-manager-rs",
-          "--package=prompt-manager-rs"
+          "--bin=summoning-circle",
+          "--package=summoning-circle"
         ],
         "filter": {
-          "name": "prompt-manager-rs",
+          "name": "summoning-circle",
           "kind": "bin"
         }
       },

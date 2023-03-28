@@ -1,28 +1,45 @@
 use dotenv::dotenv;
 use serde_json::json;
-use std::env;
+use std::env::{self, VarError};
 use reqwest::blocking::Client;
 use std::io::{self, Write};
-use rand::Rng;
+use notes::{load_note, list_notes, load_random_note};
 
-enum Error {
-    EnvironmentVariable(std::env::VarError),
-    ParseInt(std::num::ParseIntError),
-}
+mod notes;
+mod subtext;
 
 struct Environment {
     api_path: String,
     api_key: String,
 }
 
-fn main() -> Result<(), Box<dyn std::error::Error>> {
+#[derive(Debug)]
+enum AppError {
+    EnvironmentError(VarError),
+    NoteError(notes::NoteError)
+}
+
+fn main() -> Result<(), AppError> {
     dotenv().ok();
 
-    let api_path = env::var("API_PATH")?;
-    let api_key = env::var("API_KEY")?;
+    // TODO: implement From to avoid
+    let api_path = 
+        env::var("API_PATH")
+        .map_err(|e| AppError::EnvironmentError(e))?;
+    let api_key = env::var("API_KEY")
+        .map_err(|e| AppError::EnvironmentError(e))?;
     let env = Environment { api_path, api_key };
 
     let client = Client::new();
+
+    // Test loading notes from disk
+    let note = load_random_note()
+        .map_err(|e| AppError::NoteError(e))?;
+
+    let prompt = critic(&note.content, &client, &env);
+    println!("@@@\n{}\n\n", note.content);
+    let result = eval(&prompt, &client, &env);
+    println!("@@@\n{}\n\n", result);
 
     loop {
         print!("> ");

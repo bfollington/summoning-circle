@@ -536,16 +536,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "prompt-manager-rs"
-version = "0.1.0"
-dependencies = [
- "dotenv",
- "rand",
- "reqwest",
- "serde_json",
-]
-
-[[package]]
 name = "quote"
 version = "1.0.26"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -728,6 +718,16 @@ checksum = "64a4a911eed85daf18834cfaa86a79b7d266ff93ff5ba14005426219480ed662"
 dependencies = [
  "libc",
  "winapi",
+]
+
+[[package]]
+name = "summoning-circle"
+version = "0.1.0"
+dependencies = [
+ "dotenv",
+ "rand",
+ "reqwest",
+ "serde_json",
 ]
 
 [[package]]
