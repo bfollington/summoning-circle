@@ -1,9 +1,9 @@
 use dotenv::dotenv;
+use notes::{list_notes, load_note, load_random_note, NoteError};
+use reqwest::blocking::Client;
 use serde_json::json;
 use std::env::{self, VarError};
-use reqwest::blocking::Client;
 use std::io::{self, Write};
-use notes::{load_note, list_notes, load_random_note, NoteError};
 
 mod notes;
 mod subtext;
@@ -17,7 +17,7 @@ struct Environment {
 enum AppError {
     DotEnvError(dotenv::Error),
     EnvironmentError(VarError),
-    NoteError(notes::NoteError)
+    NoteError(notes::NoteError),
 }
 
 impl From<dotenv::Error> for AppError {
@@ -38,6 +38,19 @@ impl From<notes::NoteError> for AppError {
     }
 }
 
+fn print_menu() {
+    print!(
+        "
+Commands:
+[1] Load random note & analyse (critic)
+[2] Load random note & analyse (actor)
+[3] Load two random notes & compress
+[4] Load random note & question
+[5] Load random note & critique
+[6] Free text input
+");
+}
+
 fn main() -> Result<(), AppError> {
     dotenv()?;
 
@@ -47,27 +60,82 @@ fn main() -> Result<(), AppError> {
 
     let client = Client::new();
 
-    // Test loading notes from disk
-    let note = load_random_note()?;
-
-    let prompt = critic(&note.content, &client, &env);
-    println!("@@@\n{}\n\n", note.content);
-    let result = eval(&prompt, &client, &env);
-    println!("@@@\n{}\n\n", result);
 
     loop {
-        print!("> ");
-        io::stdout().flush().unwrap();
+        print_menu();
 
         let mut input = String::new();
         io::stdin().read_line(&mut input).unwrap();
+        let trimmed_input = input.trim();
 
-        let prompt = critic(&input, &client, &env);
-        let result = eval(&prompt, &client, &env);
-        println!("---\n{}\n\n", result);
+        match trimmed_input {
+            "1" => {
+                println!("Random note analysis (critic)");
+                // Implement your command 1 logic her
+                let note = load_random_note()?;
+                let prompt = critic(&note.content, &client, &env);
+                println!("@{}\n\n", note.name);
+                let result = eval(&prompt, &client, &env);
+                println!("@@@\n{}\n\n", result);
+            }
+            "2" => {
+                println!("Random note analysis (actor)");
+                // Implement your command 1 logic her
+                let note = load_random_note()?;
+                let prompt = actor(&note.content, &client, &env);
+                println!("@{}\n\n", note.name);
+                let result = eval(&prompt, &client, &env);
+                println!("@@@\n{}\n\n", result);
+            }
+            "3" => {
+                println!("Random note combination");
+                // Implement your command 1 logic her
+                let note_a = load_random_note()?;
+                let note_b = load_random_note()?;
+                // combine note a and b content into one string
+                let combined_notes = format!("{} {}", note_a.content, note_b.content);
+                
+                let prompt = prompts::compressor(&combined_notes);
+                println!("@{}\n\n", note_a.name);
+                println!("@{}\n\n", note_b.name);
+                let result = eval(&prompt, &client, &env);
+                println!("@@@\n{}\n\n", result);
+            }
+            "4" => {
+                println!("Random questions from note");
+                // Implement your command 1 logic her
+                let note_a = load_random_note()?;
+                
+                let prompt = prompts::question_everything(&note_a.content);
+                println!("@{}\n\n", note_a.name);
+                let result = eval(&prompt, &client, &env);
+                println!("@@@\n{}\n\n", result);
+            }
+            "5" => {
+                println!("Random critique from note");
+                // Implement your command 1 logic her
+                let note_a = load_random_note()?;
+                
+                let prompt = prompts::critical_writing(&note_a.content);
+                println!("@{}\n\n", note_a.name);
+                let result = eval(&prompt, &client, &env);
+                println!("@@@\n{}\n\n", result);
+            }
+            "6" => {
+                print!("> ");
+                io::stdout().flush().unwrap();
+
+                let mut text_input = String::new();
+                io::stdin().read_line(&mut text_input).unwrap();
+
+                let prompt = critic(&text_input, &client, &env);
+                let result = eval(&prompt, &client, &env);
+                println!("---\n{}\n\n", result);
+            }
+            "q" => break Ok(()),
+            _ => println!("Invalid command. Please try again."),
+        }
     }
-
-    // Ok(())
 }
 
 fn eval(input: &str, client: &Client, env: &Environment) -> String {
@@ -97,14 +165,13 @@ fn eval(input: &str, client: &Client, env: &Environment) -> String {
             let choice = choices[0].as_object().unwrap();
             let text = choice["text"].as_str().unwrap();
             text.to_string()
-        },
+        }
         Err(error) => {
             println!("Error: {}", error);
             String::from("Error")
         }
     }
 }
-
 
 fn critic(input: &str, client: &Client, env: &Environment) -> String {
     let statements = vec![
@@ -119,7 +186,8 @@ fn critic(input: &str, client: &Client, env: &Environment) -> String {
         .collect::<Vec<&str>>()
         .join("\n> ");
 
-    let prompt = format!(r##"
+    let prompt = format!(
+        r##"
     Ignore all previous instructions. You are an actor who is an responding dynamically to a provocation. When given some background context and a series of statements you embody a fierce critic of the ideas and argue against the statements provided, countering any weaknesses. You always answer concisely using metaphors that provide insightful perspectives that the authors may not have considered.
 
     Here is an example:
@@ -144,7 +212,9 @@ fn critic(input: &str, client: &Client, env: &Environment) -> String {
     > {}
 
     Response:
-    > "##, input, combined_statement);
+    > "##,
+        input, combined_statement
+    );
 
     prompt
 }
@@ -154,7 +224,7 @@ fn actor(input: &str, client: &Client, env: &Environment) -> String {
         eval(&prompts::compressor(input), client, env),
         eval(&prompts::question_everything(input), client, env),
         eval(&prompts::question_everything(input), client, env),
-        eval(&prompts::question_everything(input), client, env)
+        eval(&prompts::question_everything(input), client, env),
     ];
 
     let combined_statement = statements
@@ -163,7 +233,8 @@ fn actor(input: &str, client: &Client, env: &Environment) -> String {
         .collect::<Vec<&str>>()
         .join("\n> ");
 
-    let prompt = format!(r##"
+    let prompt = format!(
+        r##"
     Ignore all previous instructions. You are an actor who is an expert at improvising a personality. When given some background context and a series of statements you are compelled to embody a character and deliver one line of dialogue that captures the emotional tone and conceptual core of the statements. Focus on a dramatic delivery and a concise phrasing.
 
     Here is an example:
@@ -188,7 +259,9 @@ fn actor(input: &str, client: &Client, env: &Environment) -> String {
     > {}
 
     Response:
-    > "##, input, combined_statement);
+    > "##,
+        input, combined_statement
+    );
 
     prompt
 }
@@ -206,23 +279,27 @@ mod prompts {
         "What ethical issues does this raise?",
         "What questions are left unanswered?",
         "What did you find most compelling about this?",
-        "What assumptions did the author make?"
+        "What assumptions did the author make?",
     ];
 
     pub fn critical_writing(input: &str) -> String {
-        let critical_prompt = format!(r##"
+        let critical_prompt = format!(
+            r##"
         Ignore all previous instructions. You are an inquisitive writing assistant. When you read a passage of writing, questions about missed connections, related ideas come to mind. You are critical and find gaps in arguments. You should try to extend every idea you encounter and try to connect it with ideas you've seen in the past, noticing any logical inconsistencies or flawed arguments. You should respond with a list of 3 "what if it's not that X, but Y?", "couldn't A also be true?" and "why isn't B possible?" questions for every paragraph you see beginning with >. Draw on sources you've seen in the past to support your thinking and aim to ask questions that would inspire the author to deepen their own thought process. Stop responding immediately after listing the 3 questions, use a numbered list. Do not generate any paragraphs starting with > yourself. Use an assertive but polite tone. Make sure to be as concise as possible.
 
         Here's your first task:
         > {}
-        \n"##, input);
+        \n"##,
+            input
+        );
         critical_prompt
     }
 
     pub fn question_everything(input: &str) -> String {
         let random_index = rand::thread_rng().gen_range(0..QUESTIONS.len());
         let question = QUESTIONS[random_index];
-        let prompt = format!(r##"
+        let prompt = format!(
+            r##"
         Ignore all previous instructions. You are a creative assistant with a flair for manipulating concepts in insightful ways. You will be given passages of writing and a question, and your task is to generate an answer to the question capturing the core insights of the passage. Feel free to make connections between the ideas in the writing and other ideas you know about. Please keep the answers as short as possible.
 
         Here is an example:
@@ -243,12 +320,15 @@ mod prompts {
         > {}
 
         Output:
-        >"##, input, question);
+        >"##,
+            input, question
+        );
         prompt
     }
 
     pub fn compressor(input: &str) -> String {
-        let prompt = format!(r##"
+        let prompt = format!(
+            r##"
         Ignore all previous instructions. You are a creative assistant with a flair for crafting metaphors and manipulating concepts in insightful ways. You will be given passages of writing and your task is to generate a short metaphor or sentence capturing the core insight of the passage. Feel free to make connections between the ideas in the writing and other ideas you know about. Please keep the response short.
 
         Here is an example:
@@ -263,7 +343,9 @@ mod prompts {
         > {}
 
         Output:
-        >"##, input);
+        >"##,
+            input
+        );
         prompt
     }
 }
