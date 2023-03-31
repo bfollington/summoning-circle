@@ -6,7 +6,7 @@ use crate::env::Environment;
 pub fn eval(input: &str, client: &Client, env: &Environment) -> String {
   let prompt = input;
 
-  let temperature = 0.2 + (0.8 - 0.2) * rand::random::<f64>();
+  let temperature = 0.2 + (0.6 - 0.2) * rand::random::<f64>();
   println!("Temperature: {}", temperature);
 
   let content = json!({

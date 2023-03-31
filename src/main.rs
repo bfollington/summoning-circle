@@ -43,11 +43,12 @@ fn print_menu() {
 Commands:
 [1] Load random note & analyse (critic)
 [2] Load random note & analyse (actor)
-[3] Load two random notes & compress
-[4] Load random note & question
-[5] Load random note & critique
-[6] Load random note & connect to random notes
-[7] Free text input
+[3] Load 4 random notes & analyse (actor)
+[5] Load two random notes & compress
+[6] Load random note & question
+[7] Load random note & critique
+[8] Load random note & connect to random notes
+[9] Free text input
 ");
 }
 
@@ -84,6 +85,19 @@ fn main() -> Result<(), AppError> {
                 println!("@@@\n{}\n\n", result);
             }
             "3" => {
+                println!("Random 4 note analysis (actor)");
+                // Implement your command 1 logic her
+                let note = load_random_note()?;
+                let note_a = load_random_note()?;
+                let note_b = load_random_note()?;
+                let note_c = load_random_note()?;
+
+                let prompt = metaprompts::giga_actor(&note.content, &note_a.content, &note_b.content, &note_c.content, &client, &env);
+                println!("@{}\n\n", note.name);
+                let result = openai::eval(&prompt, &client, &env);
+                println!("@@@\n{}\n\n", result);
+            }
+            "4" => {
                 println!("Random note combination");
                 // Implement your command 1 logic her
                 let note_a = load_random_note()?;
@@ -97,7 +111,7 @@ fn main() -> Result<(), AppError> {
                 let result = openai::eval(&prompt, &client, &env);
                 println!("@@@\n{}\n\n", result);
             }
-            "4" => {
+            "5" => {
                 println!("Random questions from note");
                 // Implement your command 1 logic her
                 let note_a = load_random_note()?;
@@ -107,7 +121,7 @@ fn main() -> Result<(), AppError> {
                 let result = openai::eval(&prompt, &client, &env);
                 println!("@@@\n{}\n\n", result);
             }
-            "5" => {
+            "6" => {
                 println!("Random critique from note");
                 // Implement your command 1 logic her
                 let note_a = load_random_note()?;
@@ -117,7 +131,7 @@ fn main() -> Result<(), AppError> {
                 let result = openai::eval(&prompt, &client, &env);
                 println!("@@@\n{}\n\n", result);
             }
-            "6" => {
+            "7" => {
                 println!("Random note with connections to random notes");
                 // Implement your command 1 logic her
                 let note_base = load_random_note()?;
@@ -132,7 +146,7 @@ fn main() -> Result<(), AppError> {
                 // println!("@@@\n{}\n", note_base.name);
                 // println!("---\n{}\n\n", note_base.content);
             }
-            "7" => {
+            "8" => {
                 print!("> ");
                 io::stdout().flush().unwrap();
 
