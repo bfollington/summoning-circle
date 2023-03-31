@@ -41,14 +41,14 @@ fn print_menu() {
     print!(
         "
 Commands:
-[1] Load random note & analyse (critic)
-[2] Load random note & analyse (actor)
-[3] Load 4 random notes & analyse (actor)
-[5] Load two random notes & compress
-[6] Load random note & question
-[7] Load random note & critique
-[8] Load random note & connect to random notes
-[9] Free text input
+[1] Load random note & analyse (critic) (ChatGPT)
+[2] Load random note & analyse (actor) (ChatGPT)
+[3] Load 4 random notes & analyse (actor) (ChatGPT)
+[4] Load two random notes & compress
+[5] Load random note & question
+[6] Load random note & critique
+[7] Load random note & connect to random notes
+[8] Free text input
 ");
 }
 
@@ -72,7 +72,7 @@ fn main() -> Result<(), AppError> {
                 let note = load_random_note()?;
                 let prompt = metaprompts::critic(&note.content, &client, &env);
                 println!("@{}\n\n", note.name);
-                let result = openai::eval(&prompt, &client, &env);
+                let result = openai::chatgpt(&prompt, &client, &env);
                 println!("@@@\n{}\n\n", result);
             }
             "2" => {
@@ -81,7 +81,7 @@ fn main() -> Result<(), AppError> {
                 let note = load_random_note()?;
                 let prompt = metaprompts::actor(&note.content, &client, &env);
                 println!("@{}\n\n", note.name);
-                let result = openai::eval(&prompt, &client, &env);
+                let result = openai::chatgpt(&prompt, &client, &env);
                 println!("@@@\n{}\n\n", result);
             }
             "3" => {
@@ -94,7 +94,7 @@ fn main() -> Result<(), AppError> {
 
                 let prompt = metaprompts::giga_actor(&note.content, &note_a.content, &note_b.content, &note_c.content, &client, &env);
                 println!("@{}\n\n", note.name);
-                let result = openai::eval(&prompt, &client, &env);
+                let result = openai::chatgpt(&prompt, &client, &env);
                 println!("@@@\n{}\n\n", result);
             }
             "4" => {
@@ -108,7 +108,7 @@ fn main() -> Result<(), AppError> {
                 let prompt = prompts::compressor(&combined_notes);
                 println!("@{}\n\n", note_a.name);
                 println!("@{}\n\n", note_b.name);
-                let result = openai::eval(&prompt, &client, &env);
+                let result = openai::gpt3(&prompt, &client, &env);
                 println!("@@@\n{}\n\n", result);
             }
             "5" => {
@@ -118,7 +118,7 @@ fn main() -> Result<(), AppError> {
                 
                 let prompt = prompts::question_everything(&note_a.content);
                 println!("@{}\n\n", note_a.name);
-                let result = openai::eval(&prompt, &client, &env);
+                let result = openai::gpt3(&prompt, &client, &env);
                 println!("@@@\n{}\n\n", result);
             }
             "6" => {
@@ -128,7 +128,7 @@ fn main() -> Result<(), AppError> {
                 
                 let prompt = prompts::critical_writing(&note_a.content);
                 println!("@{}\n\n", note_a.name);
-                let result = openai::eval(&prompt, &client, &env);
+                let result = openai::gpt3(&prompt, &client, &env);
                 println!("@@@\n{}\n\n", result);
             }
             "7" => {
@@ -141,7 +141,7 @@ fn main() -> Result<(), AppError> {
                 let note_c = load_random_note()?;
                 
                 let prompt = prompts::connections(&note_base.content, &note_a.content, &note_b.content, &note_c.content);
-                let result = openai::eval(&prompt, &client, &env);
+                let result = openai::chatgpt(&prompt, &client, &env);
                 println!("@@@\n{}\n\n", result);
                 // println!("@@@\n{}\n", note_base.name);
                 // println!("---\n{}\n\n", note_base.content);
@@ -154,7 +154,7 @@ fn main() -> Result<(), AppError> {
                 io::stdin().read_line(&mut text_input).unwrap();
 
                 let prompt = metaprompts::critic(&text_input, &client, &env);
-                let result = openai::eval(&prompt, &client, &env);
+                let result = openai::gpt3(&prompt, &client, &env);
                 println!("---\n{}\n\n", result);
             }
             "q" => break Ok(()),

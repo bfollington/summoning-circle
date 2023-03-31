@@ -1,13 +1,13 @@
-use crate::openai::{eval};
+use crate::openai::{gpt3};
 use crate::prompts;
 use crate::env;
 use reqwest::blocking::Client;
 
 pub fn critic(input: &str, client: &Client, env: &env::Environment) -> String {
   let statements = vec![
-      eval(&prompts::compressor(input), client, env),
-      eval(&prompts::question_everything(input), client, env),
-      eval(&prompts::question_everything(input), client, env),
+      gpt3(&prompts::compressor(input), client, env),
+      gpt3(&prompts::question_everything(input), client, env),
+      gpt3(&prompts::question_everything(input), client, env),
   ];
 
   let combined_statement = statements
@@ -51,10 +51,10 @@ pub fn critic(input: &str, client: &Client, env: &env::Environment) -> String {
 
 pub fn actor(input: &str, client: &Client, env: &env::Environment) -> String {
   let statements = vec![
-      eval(&prompts::compressor(input), client, env),
-      eval(&prompts::question_everything(input), client, env),
-      eval(&prompts::question_everything(input), client, env),
-      eval(&prompts::question_everything(input), client, env),
+      gpt3(&prompts::compressor(input), client, env),
+      gpt3(&prompts::question_everything(input), client, env),
+      gpt3(&prompts::question_everything(input), client, env),
+      gpt3(&prompts::question_everything(input), client, env),
   ];
 
   let combined_statement = statements
@@ -98,12 +98,12 @@ pub fn actor(input: &str, client: &Client, env: &env::Environment) -> String {
 
 pub fn giga_actor(input: &str, note_a: &str, note_b: &str, note_c: &str, client: &Client, env: &env::Environment) -> String {
   let statements = vec![
-      eval(&prompts::compressor(input), client, env),
-      eval(&prompts::question_everything(input), client, env),
-      eval(&prompts::question_everything(note_a), client, env),
-      eval(&prompts::question_everything(note_b), client, env),
-      eval(&prompts::question_everything(note_c), client, env),
-      eval(&prompts::connections(input, note_a, note_b, note_c), client, env),
+      gpt3(&prompts::compressor(input), client, env),
+      gpt3(&prompts::question_everything(input), client, env),
+      gpt3(&prompts::question_everything(note_a), client, env),
+      gpt3(&prompts::question_everything(note_b), client, env),
+      gpt3(&prompts::question_everything(note_c), client, env),
+      gpt3(&prompts::connections(input, note_a, note_b, note_c), client, env),
   ];
 
   let combined_statement = statements
