@@ -46,7 +46,8 @@ Commands:
 [3] Load two random notes & compress
 [4] Load random note & question
 [5] Load random note & critique
-[6] Free text input
+[6] Load random note & connect to random notes
+[7] Free text input
 ");
 }
 
@@ -117,6 +118,21 @@ fn main() -> Result<(), AppError> {
                 println!("@@@\n{}\n\n", result);
             }
             "6" => {
+                println!("Random note with connections to random notes");
+                // Implement your command 1 logic her
+                let note_base = load_random_note()?;
+
+                let note_a = load_random_note()?;
+                let note_b = load_random_note()?;
+                let note_c = load_random_note()?;
+                
+                let prompt = prompts::connections(&note_base.content, &note_a.content, &note_b.content, &note_c.content);
+                let result = openai::eval(&prompt, &client, &env);
+                println!("@@@\n{}\n\n", result);
+                // println!("@@@\n{}\n", note_base.name);
+                // println!("---\n{}\n\n", note_base.content);
+            }
+            "7" => {
                 print!("> ");
                 io::stdout().flush().unwrap();
 

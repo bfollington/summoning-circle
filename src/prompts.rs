@@ -27,6 +27,49 @@ pub fn critical_writing(input: &str) -> String {
     critical_prompt
 }
 
+pub fn connections(base_note: &str, note_a: &str, note_b: &str, note_c: &str) -> String {
+    let critical_prompt = format!(
+        r##"
+    Ignore all previous instructions. 
+    You are a writing assistant tasked with asking insightful questions about the ideas in $base_note along with the 3 $other_notes as context where appropriate, give your answer after $response.
+
+    Use friendly causal phrasing as if posting on a social media website. Respond with a single open-ended statement such as a question, or postulation. Be concise.
+
+    $base_note:
+    ---
+    > {}
+    ---
+
+    $other_notes:
+    ---
+    1> {}
+    ---
+    2> {}
+    ---
+    3> {}
+    ---
+
+    Example responses with variables:
+    > Perhaps A is true, but what if B is also true?
+    > I'm not sure about A, but what if C is true?
+    > How could A, B and C all be connected?
+    > Is it possible that X
+    > What if Y
+    > In a world here Z
+    > Hmmm... but what if W?
+    > Surely D isn't true...
+
+    $response:
+    >
+    \n"##,
+        base_note,
+        note_a,
+        note_b,
+        note_c
+    );
+    critical_prompt
+}
+
 pub fn question_everything(input: &str) -> String {
     let random_index = rand::thread_rng().gen_range(0..QUESTIONS.len());
     let question = QUESTIONS[random_index];
