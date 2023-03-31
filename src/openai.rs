@@ -6,11 +6,14 @@ use crate::env::Environment;
 pub fn eval(input: &str, client: &Client, env: &Environment) -> String {
   let prompt = input;
 
+  let temperature = 0.2 + (0.8 - 0.2) * rand::random::<f64>();
+  println!("Temperature: {}", temperature);
+
   let content = json!({
       "model": "text-davinci-003",
       "prompt": prompt,
       "max_tokens": 100,
-      "temperature": 0,
+      "temperature": temperature,
       "top_p": 1,
       "n": 1,
       "stream": false,
