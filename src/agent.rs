@@ -15,6 +15,7 @@ pub struct Agent {
   pub memory_bank: Vec<Memory>
 }
 
+#[derive(Debug)]
 pub enum AgentError {
   OpenAIError(crate::openai::OpenAIError)
 }
@@ -61,27 +62,25 @@ impl Agent {
       Ok(())
   }
 
-  pub fn recall(&self, subject: &str) -> Option<String> {
+  pub fn recall(&self, embedding: Vec<f64>) -> Option<String> {
       let mut best_match: Option<String> = None;
       let mut best_match_similarity: f64 = 0.0;
 
       for memory in &self.memory_bank {
-          if memory.subject == subject {
-              let similarity = cosine_similarity(&memory.embedding, &self.memory_bank[0].embedding).unwrap();
-              if similarity > best_match_similarity {
-                  best_match = Some(memory.content.clone());
-                  best_match_similarity = similarity;
-              }
+          let similarity = cosine_similarity(&memory.embedding, &embedding).unwrap();
+          if similarity > best_match_similarity {
+              best_match = Some(memory.content.clone());
+              best_match_similarity = similarity;
           }
       }
 
       best_match
   }
 
-  pub fn prompt(&self, input: &str) -> String {
+  pub fn prompt(&self, input: &str, embedding: Vec<f64>) -> String {
       let mut prompt = self.base_prompt.clone();
 
-      let relevant = self.recall(input);
+      let relevant = self.recall(embedding);
 
       let message = match relevant {
           Some(memory) => format!("
@@ -99,12 +98,15 @@ impl Agent {
           ", input)
       };
 
+      println!("\n---\n{}\n---\n", message);
+
       prompt.push_str(&message);
       prompt
   }
 
   pub fn speak(&self, input: &str, client: &Client, env: &Environment) -> Result<String, AgentError> {
-      let prompt = self.prompt(input);
+      let embedding = embedding(input, client, env)?;
+      let prompt = self.prompt(input, embedding);
       let result = chatgpt(&prompt, &client, &env);
 
       Ok(result)

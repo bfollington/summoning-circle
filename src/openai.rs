@@ -5,6 +5,7 @@ use crate::env::Environment;
 
 pub type Embedding = Vec<f64>;
 
+#[derive(Debug)]
 pub enum OpenAIError {
     Error(String)
 }

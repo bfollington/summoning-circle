@@ -1,3 +1,4 @@
+use agent::AgentError;
 use dotenv::dotenv;
 use notes::{load_random_note, NoteError};
 use reqwest::blocking::Client;
@@ -18,6 +19,7 @@ enum AppError {
     DotEnvError(dotenv::Error),
     EnvironmentError(VarError),
     NoteError(notes::NoteError),
+    AgentError(agent::AgentError)
 }
 
 impl From<dotenv::Error> for AppError {
@@ -35,6 +37,12 @@ impl From<VarError> for AppError {
 impl From<notes::NoteError> for AppError {
     fn from(note_error: NoteError) -> Self {
         AppError::NoteError(note_error)
+    }
+}
+
+impl From<agent::AgentError> for AppError {
+    fn from(agent_error: AgentError) -> Self {
+        AppError::AgentError(agent_error)
     }
 }
 
@@ -212,56 +220,54 @@ fn wait_for_enter() {
 }
 
 fn conversation(client: &Client, env: &Environment) -> Result<(), AppError> {
-    let note_base = load_random_note()?;
 
-    print!("> ");
-    println!("{}", note_base.name);
-    println!("{}", note_base.content);
-    io::stdout().flush().unwrap();
+    let mut agent_a = agent::Agent::new("Simulation: You are a conversation bot designed to ask thought provoking questions. You respond to messages drawing connections between broad topics, making insightful use of any memories that you recall. You respond in at most two sentences.".to_string());
 
-    let mut results = vec![note_base.content.clone()];
+    println!("memorizing notes");
+    for _ in 0..3 {
+        let note_a = load_random_note()?;
+        let note_b = load_random_note()?;
+        let note_c = load_random_note()?;
+
+        agent_a.memorize(note_a.name, note_a.content, client, env)?;
+        print!(".");
+        io::stdout().flush().unwrap();
+        agent_a.memorize(note_b.name, note_b.content, client, env)?;
+        print!(".");
+        io::stdout().flush().unwrap();
+        agent_a.memorize(note_c.name, note_c.content, client, env)?;
+        print!(".");
+        io::stdout().flush().unwrap();
+    }
+
+    println!("brainstorming");
+    for _ in 0..3 {
+        let note_a = load_random_note()?;
+        let note_b = load_random_note()?;
+        let note_c = load_random_note()?;
+
+        let prompt = prompts::connections(&note_a.content, &note_b.content, &note_c.content, &note_c.content);
+        print!(".");
+        io::stdout().flush().unwrap();
+        let result = openai::chatgpt(&prompt, client, env);
+        print!(".");
+        io::stdout().flush().unwrap();
+        agent_a.memorize(note_a.name, result, client, env)?;
+        print!(".");
+        io::stdout().flush().unwrap();
+    }
 
     loop {
-        let input = results.join("\n-\nREPLY:\n");
+        print!("> ");
+        io::stdout().flush().unwrap();
 
-        let random_int = rand::random::<u8>() % 7;
-        match random_int {
-            0 | 4 | 5 | 6 => {
-                let prompt = prompts::chatter(&input);
-                let result = openai::chatgpt(&prompt, &client, &env);
-                println!("---\n{}\n\n", result);
+        let mut text_input = String::new();
+        io::stdin().read_line(&mut text_input).unwrap();
 
-                results.push(result);
-            },
-            1 => {
-                let prompt = metaprompts::critic(&input, &client, &env);
-                let result = openai::chatgpt(&prompt, &client, &env);
-                println!("---\n{}\n\n", result);
+        let response = agent_a.speak(text_input.as_str(), client, env)?;
+        println!("---\n{}\n\n", response);
+        // agent_a.memorize(text_input, response, client, env)?;
 
-                results.push(result);
-            },
-            2 => {
-                let prompt = metaprompts::actor(&input, &client, &env);
-                let result = openai::chatgpt(&prompt, &client, &env);
-                println!("---\n{}\n\n", result);
-
-                results.push(result);
-            },
-            3 => {
-                let prompt = prompts::compressor(&input);
-                let result = openai::chatgpt(&prompt, &client, &env);
-                println!("---\n{}\n\n", result);
-
-                results.push(result);
-            },
-            _ => unreachable!(),
-        }
-
-        // clear memory, breaks out of same patterns
-        if results.len() > 3 {
-            results.remove(0);
-        }
-
-        wait_for_enter();
+        // wait_for_enter();
     }
 }
