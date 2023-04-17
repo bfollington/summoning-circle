@@ -11,6 +11,7 @@ mod prompts;
 mod subtext;
 mod metaprompts;
 mod openai;
+mod agent;
 
 #[derive(Debug)]
 enum AppError {
